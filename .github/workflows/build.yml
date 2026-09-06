@@ -114,9 +114,9 @@ jobs:
           for example in examples/*.js; do
             example_base="$(basename "${example%.js}")"
             example_build_dir="build/examples-${example_base}"
+            make clean BUILD_DIR="$example_build_dir"
             rm -f js/*.js
             cp "$example" "js/$(basename "$example")"
-            make clean BUILD_DIR="$example_build_dir"
             make xs BUILD_DIR="$example_build_dir"
             test -f "${example_build_dir}/xs/${example_base}.c"
           done

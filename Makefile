@@ -78,8 +78,10 @@ print-config:
 
 clean:
 	rm -rf $(BUILD_DIR)
-	mkdir -p build
-	touch build/.gitkeep
+	@if [ "$(BUILD_DIR)" = "build" ]; then \
+		mkdir -p build; \
+		touch build/.gitkeep; \
+	fi
 
 help:
 	@echo "Targets:"
