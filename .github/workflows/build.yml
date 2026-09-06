@@ -112,9 +112,10 @@ jobs:
         run: |
           export PATH="/tmp/ci-bin:$PATH"
           for example in examples/*.js; do
+            rm -f js/*.js
             cp "$example" "js/$(basename "$example")"
             make clean
             make xs
             test -f "build/xs/$(basename "${example%.js}").c"
-            rm -f "js/$(basename "$example")"
           done
+          rm -f js/*.js

@@ -117,11 +117,18 @@ make build \
 - `examples/blink-led.js` - LED toggle logic
 - `examples/uart-echo.js` - UART echo flow
 
-To compile a specific example with the existing build flow, copy it into `js/`:
+To compile a specific example without mixing in other `js/*.js` files:
 
 ```bash
+rm -f js/*.js
 cp examples/hello-world.js js/main.js
 make xs
+```
+
+Or compile directly via helper script:
+
+```bash
+./scripts/xs-compile.sh build/xs examples/hello-world.js
 ```
 
 ## Troubleshooting

@@ -1,3 +1,5 @@
+import Timer from "timer";
+
 let state = false;
 
 Timer.repeat(() => {
