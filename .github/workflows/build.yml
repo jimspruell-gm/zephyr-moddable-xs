@@ -6,6 +6,8 @@ on:
 
 jobs:
   validate-build-setup:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,7 +15,92 @@ jobs:
       - name: Validate project structure
         run: make validate
 
-      - name: Validate make targets
+      - name: Install CI stub tools
         run: |
+          mkdir -p /tmp/ci-bin
+
+          cat > /tmp/ci-bin/xsc <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          out_dir=""
+          input=""
+          while [ "$#" -gt 0 ]; do
+            case "$1" in
+              -o)
+                out_dir="$2"
+                shift 2
+                ;;
+              -c)
+                shift
+                ;;
+              *)
+                input="$1"
+                shift
+                ;;
+            esac
+          done
+
+          base="$(basename "${input%.*}")"
+          safe_base="$(printf '%s' "$base" | tr -c '[:alnum:]_' '_')"
+          case "$safe_base" in
+            [0-9]*)
+              safe_base="_$safe_base"
+              ;;
+          esac
+          mkdir -p "$out_dir"
+          cat > "$out_dir/$base.c" <<'EOC'
+          void xs_generated___BASE__(void) {}
+          EOC
+          sed -i "s/__BASE__/${safe_base}/g" "$out_dir/$base.c"
+          EOF
+          chmod +x /tmp/ci-bin/xsc
+
+          cat > /tmp/ci-bin/west <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          printf '%s\n' "$*" > /tmp/west-args.txt
+          build_dir="build/zephyr"
+          while [ "$#" -gt 0 ]; do
+            case "$1" in
+              -d)
+                build_dir="$2"
+                shift 2
+                ;;
+              *)
+                shift
+                ;;
+            esac
+          done
+          mkdir -p "$build_dir"
+          EOF
+          chmod +x /tmp/ci-bin/west
+
+      - name: Validate make build flow
+        run: |
+          export PATH="/tmp/ci-bin:$PATH"
+          cat > js/duplicate-check.js <<'EOF'
+          export default 1;
+          EOF
+          cat > js/duplicate-check.javascript <<'EOF'
+          export default 2;
+          EOF
+          if make print-config > /tmp/make-duplicate.log 2>&1; then
+            echo "expected duplicate-basename check to fail"
+            exit 1
+          fi
+          grep -q "Duplicate JS basenames across extensions" /tmp/make-duplicate.log
+          rm -f js/duplicate-check.js js/duplicate-check.javascript
+
+          make clean
+          make build TI_DRIVER_LIBRARIES="liba;libb"
+          grep -q "TI_DRIVER_LIBRARIES=liba;libb" /tmp/west-args.txt
+
+          make clean
           make print-config
-          make -n build
+          make xs
+          make build
+          test -f build/xs/main.c
+          grep -q "APP_XS_GENERATED_DIR=" /tmp/west-args.txt
+          grep -q "TI_SIMPLELINK_SDK_DIR=" /tmp/west-args.txt
+          grep -q "TI_DRIVER_LIBRARIES=" /tmp/west-args.txt
