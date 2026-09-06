@@ -20,7 +20,7 @@ JS_BASENAMES := $(basename $(notdir $(JS_SOURCES)))
 XS_C_DIR := $(BUILD_DIR)/xs
 XS_C_SOURCES := $(addprefix $(XS_C_DIR)/,$(addsuffix .c,$(JS_BASENAMES)))
 
-.PHONY: all xs build clean validate print-config help
+.PHONY: all xs build clean validate lint print-config help
 
 all: build
 
@@ -44,11 +44,28 @@ build: xs
 validate:
 	@test -f CMakeLists.txt
 	@test -f prj.conf
+	@test -f build.sh
+	@test -f package.json
+	@test -f LICENSE
+	@test -f CONTRIBUTING.md
+	@test -f .editorconfig
 	@test -d src
 	@test -d js
+	@test -d examples
 	@test -d drivers
 	@test -d boards
+	@test -f boards/cc1352p1_launchxl.conf
+	@test -f drivers/cc1352p1.c
+	@test -f drivers/cc1352p1.h
+	@test -f scripts/xs-compile.sh
+	@test -f examples/hello-world.js
+	@test -f examples/blink-led.js
+	@test -f examples/uart-echo.js
 	@test -f .github/workflows/build.yml
+
+lint:
+	./scripts/check-format.sh
+	./scripts/check-js-syntax.sh
 
 print-config:
 	@echo "BOARD=$(BOARD)"
@@ -61,10 +78,13 @@ print-config:
 
 clean:
 	rm -rf $(BUILD_DIR)
+	mkdir -p build
+	touch build/.gitkeep
 
 help:
 	@echo "Targets:"
 	@echo "  make xs        # compile js/*.javascript and js/*.js to C with xsc"
 	@echo "  make build     # run west build for $(BOARD)"
 	@echo "  make validate  # validate project structure"
+	@echo "  make lint      # run formatting and JS syntax checks"
 	@echo "  make clean"
