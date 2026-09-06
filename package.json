@@ -1,0 +1,10 @@
+{
+  "name": "zephyr-moddable-xs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build and validation helpers for Zephyr + Moddable XS integration",
+  "scripts": {
+    "lint": "./scripts/check-js-syntax.sh",
+    "format:check": "./scripts/check-format.sh"
+  }
+}

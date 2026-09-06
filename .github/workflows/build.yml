@@ -15,6 +15,9 @@ jobs:
       - name: Validate project structure
         run: make validate
 
+      - name: Check formatting and JS syntax
+        run: make lint
+
       - name: Install CI stub tools
         run: |
           mkdir -p /tmp/ci-bin
@@ -104,3 +107,14 @@ jobs:
           grep -q "APP_XS_GENERATED_DIR=" /tmp/west-args.txt
           grep -q "TI_SIMPLELINK_SDK_DIR=" /tmp/west-args.txt
           grep -q "TI_DRIVER_LIBRARIES=" /tmp/west-args.txt
+
+      - name: Validate example compilation
+        run: |
+          export PATH="/tmp/ci-bin:$PATH"
+          for example in examples/*.js; do
+            example_base="$(basename "${example%.js}")"
+            example_build_dir="build/examples-${example_base}"
+            make clean BUILD_DIR="$example_build_dir"
+            ./scripts/xs-compile.sh "${example_build_dir}/xs" js/main.javascript "$example"
+            test -f "${example_build_dir}/xs/${example_base}.c"
+          done
