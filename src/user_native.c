@@ -7,7 +7,7 @@
 #ifdef HAVE_MODDABLE_XS
 #include "xs.h"
 #include "xsmc.h"
-#include "cc1352p1.h"
+#include "drivers/cc1352p1.h"
 
 void xs_user_hello(xsMachine *the)
 {
